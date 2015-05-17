@@ -19,9 +19,20 @@ class UsersController < ApplicationController
   def create
     @user = User.new(user_params)    # Not the final implementation!
     if @user.save
-      log_in @user
-      flash[:success] = "User #{@user.name} created!"
-      redirect_to @user
+      if Rails.configuration.x.validate_account_activation
+        @user.send_activation_email
+        flash[:info] = "Please check your email to activate your account."
+        redirect_to root_url
+
+      else
+        # mark as activated without the email confirmation
+        @user.activate!
+        log_in @user
+        flash[:success] = "User #{@user.name} created!"
+        redirect_to @user
+
+      end
+
     else
       render 'new'
     end
